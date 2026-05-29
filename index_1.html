@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Metanet Project Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --blue:#0041A0; --sky:#00A1E4; --red:#ED1C24; --yellow:#FAA61A; --gray1:#A2A9AD;
+    --ink:#1A2332; --sub:#7B868C; --line:#E2E8F1; --faint:#EFF3FA; --bg:#F3F6FB; --card:#FFFFFF;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:'Noto Sans KR','Helvetica Neue',sans-serif;}
+  .band{background:var(--blue);color:#fff;padding:22px 22px 24px;}
+  .wrap{max-width:980px;margin:0 auto;}
+  .pad{max-width:980px;margin:0 auto;padding:22px 22px 60px;}
+  h1{margin:5px 0 0;font-size:28px;font-weight:700;letter-spacing:-.5px;}
+  .eyebrow{font-size:11px;letter-spacing:2px;color:var(--yellow);font-weight:700;}
+  .brandline{display:flex;align-items:center;gap:11px;margin-bottom:16px;}
+  .brandline .nm{font-size:22px;font-weight:900;letter-spacing:-.5px;}
+  .brandline .tg{font-size:12px;color:rgba(255,255,255,.7);font-weight:300;margin-top:4px;}
+  .meta{font-size:12.5px;color:rgba(255,255,255,.8);}
+  .meta b{color:#fff;}
+  .toprow{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+
+  .stepper{display:flex;gap:8px;margin-bottom:24px;flex-wrap:wrap;}
+  .step{display:flex;align-items:center;gap:9px;padding:11px 16px;border-radius:11px;background:var(--card);
+    color:var(--sub);border:1px solid var(--line);font-size:13.5px;font-weight:500;cursor:pointer;}
+  .step.active{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .step .n{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;background:var(--faint);color:var(--sub);}
+  .step.active .n{background:var(--yellow);color:var(--blue);}
+
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;}
+  .panel h3{margin:0;font-size:16.5px;font-weight:700;}
+  .phead{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .grid{display:grid;}
+  .gap16{gap:16px;}
+  label.fld{display:block;}
+  label.fld>span{display:block;font-size:12px;color:var(--sub);margin-bottom:5px;font-weight:500;}
+  .inp{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;background:var(--card);
+    font-family:inherit;font-size:14px;color:var(--ink);outline:none;transition:border-color .15s;}
+  .inp:focus{border-color:var(--blue);}
+  select.inp{appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%237B868C' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");background-repeat:no-repeat;background-position:right 11px center;padding-right:30px;}
+  .locked{display:flex;align-items:center;gap:8px;background:var(--faint);cursor:default;font-weight:600;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .btn{cursor:pointer;border:none;font-family:inherit;transition:transform .08s;}
+  .btn:active{transform:translateY(1px);}
+  .btn-primary{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;border-radius:9px;background:var(--blue);color:#fff;font-size:13px;font-weight:600;}
+  .btn-add{display:flex;align-items:center;justify-content:center;gap:6px;padding:11px;border-radius:9px;background:var(--blue);color:#fff;font-weight:600;font-size:14px;width:100%;}
+  .btn-ghost{padding:11px 14px;border-radius:9px;background:var(--faint);color:var(--sub);}
+  .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+
+  .proj-layout{display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start;}
+  @media(max-width:780px){ .proj-layout{grid-template-columns:1fr;} .charts2{grid-template-columns:1fr !important;} }
+
+  .corpcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;}
+  .corpcard{text-align:left;padding:18px;border-radius:14px;background:var(--card);border:2px solid var(--line);position:relative;cursor:pointer;}
+  .corpcard .go{position:absolute;top:16px;right:16px;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;color:#fff;}
+  .corpcard .nm{font-size:16px;font-weight:700;}
+  .corpcard .st{font-size:11.5px;margin-top:10px;font-weight:600;}
+
+  .chip{display:flex;align-items:center;gap:6px;padding:6px 11px;border-radius:20px;font-size:12.5px;background:var(--card);color:var(--sub);border:1px solid var(--line);font-weight:500;cursor:pointer;}
+  .chip.on{background:var(--blue);color:#fff;border-color:var(--blue);}
+
+  .prow{padding:12px 13px;border-radius:10px;border:1px solid var(--line);}
+  .prow:hover{background:var(--faint);}
+  .prow .t{display:flex;align-items:center;gap:10px;}
+  .prow .nm{font-weight:600;font-size:14.5px;}
+  .prow .sub{font-size:11.5px;color:var(--sub);}
+  .badge{font-size:11px;font-weight:600;color:#fff;padding:3px 9px;border-radius:20px;}
+  .iconbtn{background:none;border:none;cursor:pointer;padding:5px;color:var(--sub);display:grid;place-items:center;}
+  .iconbtn.del{color:var(--red);}
+  .pmeta{margin-top:8px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font-size:11.5px;color:var(--sub);}
+
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;min-width:0;}
+  .stat .lbl{display:flex;align-items:center;gap:8px;color:var(--sub);font-size:12.5px;font-weight:500;}
+  .stat .val{font-size:28px;line-height:1;font-weight:900;letter-spacing:-.5px;}
+  .stat .sub{font-size:11.5px;color:var(--sub);}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;}
+
+  .insight{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;border-radius:10px;background:var(--faint);font-size:13.5px;line-height:1.55;}
+  .insight.warn{background:#FDECEC;}
+  .empty{text-align:center;padding:34px 16px;color:var(--sub);}
+  .legend{display:flex;gap:16px;justify-content:center;margin-top:8px;font-size:12px;color:var(--sub);}
+  .legend span{display:flex;align-items:center;gap:6px;}
+  .sq{width:11px;height:11px;border-radius:3px;}
+  .billrow{display:grid;grid-template-columns:84px 1fr;gap:7px;}
+  .billrow .r{display:flex;gap:7px;}
+  .billrow .r .inp[type=date]{flex:0 0 auto;width:124px;}
+  .billrow .r .amt{flex:1;min-width:0;}
+  .billrow .x{flex:0 0 auto;background:var(--faint);color:var(--sub);border-radius:8px;padding:0 9px;border:none;cursor:pointer;}
+  .addbill{margin-top:8px;display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:8px;background:var(--faint);color:var(--blue);font-size:12.5px;font-weight:600;border:none;cursor:pointer;}
+  svg.chart{width:100%;height:auto;display:block;}
+</style>
+</head>
+<body>
+  <div class="band">
+    <div class="wrap">
+      <div class="brandline" id="brandline"></div>
+      <div class="toprow">
+        <div>
+          <div class="eyebrow">PROJECT INTELLIGENCE</div>
+          <h1>Metanet Project Dashboard</h1>
+        </div>
+        <div class="meta" id="counts"></div>
+      </div>
+    </div>
+  </div>
+  <div class="pad">
+    <div class="stepper" id="stepper"></div>
+    <div id="content"></div>
+  </div>
+
+<script>
+/* ---------- config ---------- */
+var COL = {blue:'#0041A0',sky:'#00A1E4',red:'#ED1C24',yellow:'#FAA61A',gray1:'#A2A9AD',sub:'#7B868C',ink:'#1A2332',line:'#E2E8F1',faint:'#EFF3FA'};
+var CORPS = [
+  {id:'metanetdl', name:'Metanet DL', color:COL.blue},
+  {id:'fintech', name:'Metanet Fintech', color:COL.sky},
+  {id:'skelter', name:'Skelter Labs + ApplyAI', color:COL.yellow},
+];
+var STATUSES = ['계약완료','수행중','수행완료','선투입'];
+var STATUS_COLOR = {'계약완료':COL.yellow,'수행중':COL.sky,'수행완료':COL.blue,'선투입':COL.gray1};
+var BILLING_ITEMS = ['선금','중도금','잔금'];
+var GROWTH_MIX = ['Existing/Renewal','NetNew'];
+var SVC_MODEL = ['IT Service','ARR'];
+
+/* ---------- helpers ---------- */
+function uid(){return Math.random().toString(36).slice(2,9);}
+function num(v){var n=Number(String(v==null?'':v).replace(/[^0-9.-]/g,''));return isNaN(n)?0:n;}
+function fmtAmt(v){return num(v).toLocaleString('ko-KR')+'백만';}
+function daysUntil(d){if(!d)return null;return Math.ceil((new Date(d)-new Date())/86400000);}
+function esc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function corpName(id){var c=state.corps.find(function(x){return x.id===id;});return c?c.name:'미지정';}
+function corpColor(id){var c=state.corps.find(function(x){return x.id===id;});return c?c.color:COL.sub;}
+function shortName(n){return n.replace('Skelter Labs + ApplyAI','Skelter+ApplyAI');}
+function swirl(sz){sz=sz||30;var w=Math.round(sz*0.46);
+  return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 100 100" fill="none" style="flex-shrink:0">'
+    +'<path d="M82 50 A32 32 0 0 1 55.55 81.51" stroke="'+COL.red+'" stroke-width="14" stroke-linecap="round"/>'
+    +'<path d="M50 82 A32 32 0 0 1 18.49 55.55" stroke="'+COL.yellow+'" stroke-width="14" stroke-linecap="round"/>'
+    +'<path d="M18 50 A32 32 0 0 1 44.45 18.49" stroke="'+COL.sky+'" stroke-width="14" stroke-linecap="round"/>'
+    +'<path d="M50 18 A32 32 0 0 1 81.51 44.45" stroke="'+COL.blue+'" stroke-width="14" stroke-linecap="round"/></svg>';}
+function ico(name){var p={
+  arrow:'<polyline points="9 6 15 12 9 18"/>',
+  edit:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>',
+  trash:'<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
+  plus:'<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>',
+  x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
+  check:'<polyline points="20 6 9 17 4 12"/>',
+  spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/>',
+  alert:'<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
+  };
+  return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(p[name]||'')+'</svg>';}
+
+/* ---------- state ---------- */
+var state = {step:0, corps:[], projects:[], focus:null, editId:null, filter:'all'};
+var form = null;
+function newBlank(corpId){return {corpId:corpId||'', name:'', status:'계약완료', growthMix:'Existing/Renewal', svcModel:'IT Service', endClient:'', client:'', start:'', end:'', gr:'', nr:'', license:'', mm:'', billings:[{item:'선금',date:'',amount:''}]};}
+function save(){try{localStorage.setItem('metanet-dashboard',JSON.stringify({corps:state.corps,projects:state.projects}));}catch(e){}}
+function load(){try{var r=localStorage.getItem('metanet-dashboard');if(r){var d=JSON.parse(r);state.corps=d.corps||[];state.projects=d.projects||[];}}catch(e){}}
+
+/* ---------- actions ---------- */
+function setStep(i){state.step=i;if(i===1){if(!state.focus)state.focus=(state.corps[0]||{}).id||null;if(!form||form.corpId!==state.focus)form=newBlank(state.focus);if(state.filter==null)state.filter=state.focus||'all';}render();}
+function pick(id){if(!state.corps.some(function(c){return c.id===id;}))state.corps.push(CORPS.find(function(c){return c.id===id;}));state.focus=id;form=newBlank(id);state.filter=id;state.step=1;save();render();}
+function setFilter(id){state.filter=id;renderContent();}
+function addBilling(){form.billings.push({item:'중도금',date:'',amount:''});renderContent();}
+function removeBilling(i){form.billings.splice(i,1);renderContent();}
+function resetForm(){form=newBlank(state.focus);state.editId=null;renderContent();}
+function editProject(id){var p=state.projects.find(function(x){return x.id===id;});if(!p)return;form={corpId:p.corpId,name:p.name,status:p.status||'계약완료',growthMix:p.growthMix||'Existing/Renewal',svcModel:p.svcModel||'IT Service',endClient:p.endClient||'',client:p.client||'',start:p.start||'',end:p.end||'',gr:p.gr||'',nr:p.nr||'',license:p.license||'',mm:p.mm||'',billings:(p.billings&&p.billings.length)?p.billings.map(function(b){return {item:b.item,date:b.date,amount:b.amount};}):[{item:'선금',date:'',amount:''}]};state.editId=id;state.focus=p.corpId;renderContent();}
+function deleteProject(id){if(!confirm('이 프로젝트를 삭제할까요?'))return;state.projects=state.projects.filter(function(p){return p.id!==id;});if(state.editId===id){form=newBlank(state.focus);state.editId=null;}save();render();}
+function submitProject(){if(!form.name.trim()||!form.corpId){alert('프로젝트명을 입력해 주세요.');return;}var rec={corpId:form.corpId,name:form.name.trim(),status:form.status,growthMix:form.growthMix,svcModel:form.svcModel,endClient:form.endClient,client:form.client,start:form.start,end:form.end,gr:form.gr,nr:form.nr,license:form.license,mm:form.mm,billings:form.billings.map(function(b){return {item:b.item,date:b.date,amount:b.amount};})};if(state.editId){state.projects=state.projects.map(function(p){return p.id===state.editId?Object.assign({},p,rec):p;});}else{rec.id=uid();state.projects.push(rec);}form=newBlank(state.focus);state.editId=null;save();render();}
+function loadSample(){state.corps=CORPS.slice();state.projects=sampleProjects();state.focus=null;save();render();}
+
+/* ---------- render ---------- */
+function render(){
+  document.getElementById('brandline').innerHTML = swirl(30)+'<span class="nm">Metanet</span><span class="tg">Digital Business Platform</span>';
+  document.getElementById('counts').innerHTML = '운영 법인 <b>'+state.corps.length+'</b> · 프로젝트 <b>'+state.projects.length+'</b>';
+  var steps=[['법인 설정'],['프로젝트 입력'],['인사이트']];
+  document.getElementById('stepper').innerHTML = steps.map(function(s,i){
+    return '<button class="step'+(state.step===i?' active':'')+'" onclick="setStep('+i+')"><span class="n">'+(i+1)+'</span>'+s[0]+'</button>';
+  }).join('');
+  renderContent();
+}
+function renderContent(){
+  var el=document.getElementById('content');
+  if(state.step===0) el.innerHTML=viewCorps();
+  else if(state.step===1) el.innerHTML=viewProjects();
+  else el.innerHTML=viewInsights();
+}
+
+/* ----- step 0 ----- */
+function viewCorps(){
+  var right = state.corps.length? '<button class="btn btn-primary" onclick="setStep(1)">프로젝트 입력 '+ico('arrow')+'</button>':'';
+  var cards = CORPS.map(function(o){
+    var used=state.corps.some(function(c){return c.id===o.id;});
+    var cnt=state.projects.filter(function(p){return p.corpId===o.id;}).length;
+    return '<button class="corpcard" onclick="pick(\''+o.id+'\')" style="border-color:'+(used?o.color:COL.line)+';'+(used?'box-shadow:0 4px 16px '+o.color+'22;':'')+'">'
+      +'<span class="go" style="background:'+o.color+'">'+ico('arrow')+'</span>'
+      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'+swirl(26)+'<span class="dot" style="background:'+o.color+';border-radius:3px;width:10px;height:10px"></span></div>'
+      +'<div class="nm">'+esc(o.name)+'</div>'
+      +'<div class="st" style="color:'+(used?o.color:COL.gray1)+'">'+(used?('프로젝트 '+cnt+'건 등록됨'):'프로젝트 입력하기')+'</div></button>';
+  }).join('');
+  return '<div class="panel"><div class="phead"><h3>법인을 선택하세요</h3>'+right+'</div>'
+    +'<p style="margin:0 0 16px;font-size:13.5px;color:'+COL.sub+';line-height:1.5">법인을 클릭하면 해당 법인의 프로젝트 입력 화면으로 바로 이동합니다.</p>'
+    +'<div class="corpcards">'+cards+'</div></div>';
+}
+
+/* ----- step 1 ----- */
+function selHtml(value, options, attr){
+  return '<select class="inp" '+attr+'>'+options.map(function(o){return '<option'+(o===value?' selected':'')+'>'+esc(o)+'</option>';}).join('')+'</select>';
+}
+function viewProjects(){
+  if(state.corps.length===0){
+    return '<div class="panel"><div class="phead"><h3>프로젝트 입력</h3></div><div class="empty">먼저 법인을 선택해야 합니다.<br><br><button class="btn btn-primary" onclick="setStep(0)">법인 설정으로 이동</button></div></div>';
+  }
+  // form
+  var bills = form.billings.map(function(b,i){
+    return '<div class="billrow">'
+      + selHtml(b.item, BILLING_ITEMS, 'onchange="form.billings['+i+'].item=this.value"')
+      + '<div class="r">'
+        + '<input class="inp" type="month" value="'+esc(b.date)+'" oninput="form.billings['+i+'].date=this.value">'
+        + '<input class="inp amt" value="'+esc(b.amount)+'" placeholder="금액(백만)" oninput="form.billings['+i+'].amount=this.value">'
+        + (form.billings.length>1?'<button class="x" onclick="removeBilling('+i+')">'+ico('x')+'</button>':'')
+      + '</div></div>';
+  }).join('');
+
+  var formHtml = '<div class="panel"><div class="phead"><h3>'+(state.editId?'프로젝트 수정':'프로젝트 추가')+'</h3></div>'
+    + '<div class="grid" style="gap:11px">'
+    + '<label class="fld"><span>소속 법인</span><div class="inp locked"><span class="dot" style="background:'+corpColor(form.corpId)+'"></span><span>'+esc(corpName(form.corpId))+'</span></div></label>'
+    + '<label class="fld"><span>프로젝트명 *</span><input class="inp" value="'+esc(form.name)+'" placeholder="예) 차세대 플랫폼 구축" oninput="form.name=this.value"></label>'
+    + '<label class="fld"><span>Status</span>'+selHtml(form.status, STATUSES, 'onchange="form.status=this.value"')+'</label>'
+    + '<div class="row2"><label class="fld"><span>Growth Mix</span>'+selHtml(form.growthMix, GROWTH_MIX, 'onchange="form.growthMix=this.value"')+'</label>'
+    + '<label class="fld"><span>SVC Model</span>'+selHtml(form.svcModel, SVC_MODEL, 'onchange="form.svcModel=this.value"')+'</label></div>'
+    + '<div class="row2"><label class="fld"><span>End Client</span><input class="inp" value="'+esc(form.endClient)+'" placeholder="최종 고객사" oninput="form.endClient=this.value"></label>'
+    + '<label class="fld"><span>Client</span><input class="inp" value="'+esc(form.client)+'" placeholder="계약 고객사" oninput="form.client=this.value"></label></div>'
+    + '<div class="row2"><label class="fld"><span>계약 시작일</span><input class="inp" type="date" value="'+esc(form.start)+'" oninput="form.start=this.value"></label>'
+    + '<label class="fld"><span>계약 종료일</span><input class="inp" type="date" value="'+esc(form.end)+'" oninput="form.end=this.value"></label></div>'
+    + '<div class="row2"><label class="fld"><span>GR (백만)</span><input class="inp" value="'+esc(form.gr)+'" placeholder="Gross Revenue" oninput="form.gr=this.value"></label>'
+    + '<label class="fld"><span>NR (백만)</span><input class="inp" value="'+esc(form.nr)+'" placeholder="Net Revenue" oninput="form.nr=this.value"></label></div>'
+    + '<div class="row2"><label class="fld"><span>투입 M/M</span><input class="inp" value="'+esc(form.mm)+'" placeholder="예) 24" oninput="form.mm=this.value"></label>'
+    + '<label class="fld"><span>라이선스 금액 (백만)</span><input class="inp" value="'+esc(form.license)+'" placeholder="License" oninput="form.license=this.value"></label></div>'
+    + '<div><span style="display:block;font-size:12px;color:'+COL.sub+';margin-bottom:6px;font-weight:500">청구 예정일</span><div class="grid" style="gap:8px">'+bills+'</div>'
+    + '<button class="addbill" onclick="addBilling()">'+ico('plus')+'청구 예정 추가</button></div>'
+    + '<div style="display:flex;gap:8px;margin-top:4px"><button class="btn btn-add" onclick="submitProject()">'+(state.editId?ico('check')+'수정 저장':ico('plus')+'추가')+'</button>'
+    + (state.editId?'<button class="btn btn-ghost" onclick="resetForm()">'+ico('x')+'</button>':'')+'</div>'
+    + '</div></div>';
+
+  // list
+  var shown = state.filter==='all'? state.projects : state.projects.filter(function(p){return p.corpId===state.filter;});
+  var chips = '<button class="chip'+(state.filter==='all'?' on':'')+'" onclick="setFilter(\'all\')">전체</button>'
+    + state.corps.map(function(c){return '<button class="chip'+(state.filter===c.id?' on':'')+'" onclick="setFilter(\''+c.id+'\')"><span class="dot" style="background:'+c.color+'"></span>'+esc(c.name)+'</button>';}).join('');
+  var rows = shown.length? shown.map(function(p){
+    var meta=[p.svcModel&&esc(p.svcModel), p.growthMix&&esc(p.growthMix), p.gr&&('GR '+fmtAmt(p.gr)), p.nr&&('NR '+fmtAmt(p.nr)), p.license&&('License '+fmtAmt(p.license)), p.mm&&('M/M '+esc(p.mm)), (p.billings&&p.billings.length)?('청구 '+p.billings.length+'건'):null].filter(Boolean).join(' · ');
+    var period=(p.start||p.end)?('<span>'+(esc(p.start)||'?')+' ~ '+(esc(p.end)||'?')+'</span>'):'';
+    return '<div class="prow"><div class="t"><span class="dot" style="background:'+corpColor(p.corpId)+'"></span>'
+      +'<div style="flex:1;min-width:0"><div class="nm">'+esc(p.name)+'</div><div class="sub">'+esc(corpName(p.corpId))+(p.client?' · '+esc(p.client):'')+(p.endClient?' &rarr; '+esc(p.endClient):'')+'</div></div>'
+      +'<span class="badge" style="background:'+(STATUS_COLOR[p.status]||COL.gray1)+'">'+esc(p.status)+'</span>'
+      +'<button class="iconbtn" onclick="editProject(\''+p.id+'\')">'+ico('edit')+'</button>'
+      +'<button class="iconbtn del" onclick="deleteProject(\''+p.id+'\')">'+ico('trash')+'</button></div>'
+      +'<div class="pmeta"><span style="flex:1;min-width:0">'+(meta||'세부 정보 없음')+'</span>'+period+'</div></div>';
+  }).join('') : '<div class="empty">해당 조건의 프로젝트가 없습니다.</div>';
+
+  var listRight = state.projects.length? '<button class="btn btn-primary" onclick="setStep(2)">인사이트 보기 '+ico('arrow')+'</button>':'';
+  var listHtml = '<div class="panel"><div class="phead"><h3>프로젝트 목록 ('+shown.length+')</h3>'+listRight+'</div>'
+    + '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">'+chips+'</div>'
+    + '<div class="grid" style="gap:8px">'+rows+'</div></div>';
+
+  return '<div class="proj-layout">'+formHtml+listHtml+'</div>';
+}
+
+/* ----- step 2 ----- */
+function pol(cx,cy,r,deg){var a=deg*Math.PI/180;return [cx+r*Math.cos(a),cy+r*Math.sin(a)];}
+function donut(segs){
+  var total=segs.reduce(function(s,x){return s+x.value;},0)||1;var cx=85,cy=95,r=66,sw=26,a=-90,out='';
+  segs.forEach(function(s){
+    var ang=s.value/total*360;
+    if(ang>=359.9){ out+='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" stroke="'+s.color+'" stroke-width="'+sw+'" fill="none"/>'; return; }
+    var p1=pol(cx,cy,r,a),p2=pol(cx,cy,r,a+ang),large=ang>180?1:0;
+    out+='<path d="M '+p1[0].toFixed(2)+' '+p1[1].toFixed(2)+' A '+r+' '+r+' 0 '+large+' 1 '+p2[0].toFixed(2)+' '+p2[1].toFixed(2)+'" stroke="'+s.color+'" stroke-width="'+sw+'" fill="none"/>';
+    a+=ang;
+  });
+  return '<svg class="chart" viewBox="0 0 170 190">'+out+'</svg>';
+}
+function barChart(data){
+  var W=520,H=220,pt=14,pb=34,pl=30,pr=10,iW=W-pl-pr,iH=H-pt-pb;
+  var max=Math.max.apply(null,[1].concat(data.map(function(d){return d.value;})));
+  var bw=iW/Math.max(1,data.length),out='';
+  // gridlines
+  for(var g=0;g<=4;g++){var gy=pt+iH-iH*g/4;out+='<line x1="'+pl+'" y1="'+gy+'" x2="'+(W-pr)+'" y2="'+gy+'" stroke="'+COL.line+'" stroke-dasharray="3 3"/>';}
+  data.forEach(function(d,i){
+    var h=iH*(d.value/max),x=pl+i*bw+bw*0.22,y=pt+iH-h,w=bw*0.56,cx=pl+i*bw+bw/2;
+    out+='<rect x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+w.toFixed(1)+'" height="'+Math.max(0,h).toFixed(1)+'" rx="5" fill="'+d.color+'"><title>'+esc(d.label)+': '+d.value+'</title></rect>';
+    out+='<text x="'+cx.toFixed(1)+'" y="'+(y-5).toFixed(1)+'" text-anchor="middle" font-size="11" font-weight="700" fill="'+COL.ink+'">'+d.value+'</text>';
+    out+='<text x="'+cx.toFixed(1)+'" y="'+(H-12)+'" text-anchor="middle" font-size="10.5" fill="'+COL.sub+'">'+esc(d.label)+'</text>';
+  });
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'">'+out+'</svg>';
+}
+function groupBar(data){ // each: {label, gr, nr, color}
+  var W=900,H=250,pt=14,pb=34,pl=46,pr=10,iW=W-pl-pr,iH=H-pt-pb;
+  var max=Math.max.apply(null,[1].concat(data.map(function(d){return Math.max(d.gr,d.nr);})));
+  var gw=iW/Math.max(1,data.length),out='';
+  for(var g=0;g<=4;g++){var gy=pt+iH-iH*g/4;var lv=Math.round(max*g/4);out+='<line x1="'+pl+'" y1="'+gy+'" x2="'+(W-pr)+'" y2="'+gy+'" stroke="'+COL.line+'" stroke-dasharray="3 3"/>';out+='<text x="'+(pl-6)+'" y="'+(gy+3)+'" text-anchor="end" font-size="10" fill="'+COL.sub+'">'+lv.toLocaleString('ko-KR')+'</text>';}
+  data.forEach(function(d,i){
+    var base=pl+i*gw, bw=gw*0.30, gap=gw*0.06, cx=base+gw/2;
+    var hg=iH*(d.gr/max), hn=iH*(d.nr/max);
+    var xg=base+gw*0.5-bw-gap/2, xn=base+gw*0.5+gap/2;
+    out+='<rect x="'+xg.toFixed(1)+'" y="'+(pt+iH-hg).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(0,hg).toFixed(1)+'" rx="5" fill="'+COL.blue+'"><title>GR '+d.gr.toLocaleString('ko-KR')+'백만</title></rect>';
+    out+='<rect x="'+xn.toFixed(1)+'" y="'+(pt+iH-hn).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+Math.max(0,hn).toFixed(1)+'" rx="5" fill="'+COL.sky+'"><title>NR '+d.nr.toLocaleString('ko-KR')+'백만</title></rect>';
+    out+='<text x="'+cx.toFixed(1)+'" y="'+(H-12)+'" text-anchor="middle" font-size="10.5" fill="'+COL.sub+'">'+esc(d.label)+'</text>';
+  });
+  return '<svg class="chart" viewBox="0 0 '+W+' '+H+'">'+out+'</svg>';
+}
+function statCard(lbl,val,sub,color){
+  return '<div class="stat"><div class="lbl" style="color:'+COL.sub+'"><span style="color:'+(color||COL.blue)+';display:inline-flex">'+ico('spark')+'</span>'+lbl+'</div><div class="val">'+val+'</div>'+(sub?'<div class="sub">'+sub+'</div>':'')+'</div>';
+}
+function viewInsights(){
+  var P=state.projects;
+  if(P.length===0){
+    return '<div class="panel"><div class="phead"><h3>인사이트</h3></div><div class="empty">분석할 데이터가 없습니다. 프로젝트를 입력하거나, 샘플 데이터로 미리 살펴보세요.<br><br><button class="btn btn-primary" onclick="loadSample()">'+ico('plus')+'샘플 데이터 불러오기</button></div></div>';
+  }
+  var billSum=function(p){return (p.billings||[]).reduce(function(s,b){return s+num(b.amount);},0);};
+  var totalGR=P.reduce(function(s,p){return s+num(p.gr);},0);
+  var totalNR=P.reduce(function(s,p){return s+num(p.nr);},0);
+  var totalMM=P.reduce(function(s,p){return s+num(p.mm);},0);
+  var totalBill=P.reduce(function(s,p){return s+billSum(p);},0);
+  var totalLicense=P.reduce(function(s,p){return s+num(p.license);},0);
+  var done=P.filter(function(p){return p.status==='수행완료';}).length;
+  var running=P.filter(function(p){return p.status==='수행중';}).length;
+  var byCorp=state.corps.map(function(c){var ps=P.filter(function(p){return p.corpId===c.id;});return {label:shortName(c.name),color:c.color,count:ps.length,gr:ps.reduce(function(s,p){return s+num(p.gr);},0),nr:ps.reduce(function(s,p){return s+num(p.nr);},0)};});
+  var byStatus=STATUSES.map(function(s){return {name:s,value:P.filter(function(p){return p.status===s;}).length,color:STATUS_COLOR[s]};}).filter(function(x){return x.value>0;});
+  var soon=P.filter(function(p){var d=daysUntil(p.end);return p.status==='수행중'&&d!==null&&d>=0&&d<=30;});
+  var topCount=byCorp.slice().sort(function(a,b){return b.count-a.count;})[0];
+  var topGR=byCorp.slice().sort(function(a,b){return b.gr-a.gr;})[0];
+  var margin=totalGR?Math.round(totalNR/totalGR*100):0;
+
+  var stats='<div class="stats">'
+    + statCard('운영 법인', state.corps.length, '프로젝트 '+P.length+'건', COL.blue)
+    + statCard('총 GR', fmtAmt(totalGR), '총 NR '+fmtAmt(totalNR)+' (마진 '+margin+'%)', COL.yellow)
+    + statCard('총 라이선스', fmtAmt(totalLicense), 'License 합계', COL.sky)
+    + statCard('투입 M/M', totalMM.toLocaleString('ko-KR'), '전체 합계', COL.sky)
+    + statCard('수행완료율', Math.round(done/P.length*100)+'%', '완료 '+done+' · 수행중 '+running, COL.blue)
+    + statCard('청구 예정 합계', fmtAmt(totalBill), '등록된 청구 금액', COL.blue)
+    + statCard('마감 임박', soon.length, '수행중 & 종료 30일↓', COL.red)
+    + '</div>';
+
+  var ins='';
+  if(topCount&&topCount.count>0) ins+='<div class="insight"><span style="color:'+COL.blue+';margin-top:1px">'+ico('check')+'</span><span>프로젝트가 가장 많은 법인은 <b>'+esc(topCount.label)+'</b> ('+topCount.count+'건)이며, GR 규모는 <b>'+esc(topGR.label)+'</b>('+fmtAmt(topGR.gr)+')가 가장 큽니다.</span></div>';
+  ins+='<div class="insight"><span style="color:'+COL.blue+';margin-top:1px">'+ico('check')+'</span><span>전체 GR <b>'+fmtAmt(totalGR)+'</b> 대비 NR <b>'+fmtAmt(totalNR)+'</b>로 평균 마진율은 <b>'+margin+'%</b>입니다.</span></div>';
+  if(soon.length>0) ins+='<div class="insight warn"><span style="color:'+COL.red+';margin-top:1px">'+ico('alert')+'</span><span>계약 종료가 30일 이내로 임박한 수행중 프로젝트 <b>'+soon.length+'건</b>: '+esc(soon.map(function(p){return p.name;}).join(', '))+'.</span></div>';
+  else ins+='<div class="insight"><span style="color:'+COL.blue+';margin-top:1px">'+ico('check')+'</span><span>계약 종료가 임박한 수행중 프로젝트는 없습니다.</span></div>';
+  ins+='<div class="insight"><span style="color:'+COL.blue+';margin-top:1px">'+ico('check')+'</span><span>등록된 청구 예정 금액 합계는 <b>'+fmtAmt(totalBill)+'</b>입니다.</span></div>';
+
+  var legend=byStatus.map(function(s){return '<div style="display:flex;align-items:center;gap:7px;font-size:12.5px"><span class="sq" style="background:'+s.color+'"></span>'+esc(s.name)+' <b>'+s.value+'</b></div>';}).join('');
+
+  return stats
+    + '<div class="panel" style="margin-top:16px"><div class="phead"><h3>자동 인사이트</h3><span style="color:'+COL.blue+'">'+ico('spark')+'</span></div><div class="grid" style="gap:9px">'+ins+'</div></div>'
+    + '<div class="grid charts2 gap16" style="grid-template-columns:1fr 1fr;margin-top:16px">'
+      + '<div class="panel"><div class="phead"><h3>법인별 프로젝트 수</h3></div>'+barChart(byCorp.map(function(c){return {label:c.label,value:c.count,color:c.color};}))+'</div>'
+      + '<div class="panel"><div class="phead"><h3>Status 분포</h3></div><div style="display:flex;align-items:center;gap:6px"><div style="flex:1">'+donut(byStatus)+'</div><div class="grid" style="gap:7px">'+legend+'</div></div></div>'
+    + '</div>'
+    + '<div class="panel" style="margin-top:16px"><div class="phead"><h3>법인별 GR vs NR (백만)</h3></div>'+groupBar(byCorp)
+      + '<div class="legend"><span><span class="sq" style="background:'+COL.blue+'"></span>GR</span><span><span class="sq" style="background:'+COL.sky+'"></span>NR</span></div></div>';
+}
+
+/* ---------- sample ---------- */
+function sampleProjects(){
+  var t=new Date();
+  function d(n){return new Date(t.getTime()+n*86400000).toISOString().slice(0,10);}
+  function mo(n){return new Date(t.getTime()+n*86400000).toISOString().slice(0,7);}
+  return [
+    {id:'p1',corpId:'metanetdl',name:'차세대 ERP 구축',status:'수행중',growthMix:'NetNew',svcModel:'IT Service',endClient:'삼성전자',client:'메타넷글로벌',start:d(-120),end:d(40),gr:'1200',nr:'360',license:'200',mm:'24',billings:[{item:'선금',date:mo(-110),amount:'360'},{item:'중도금',date:mo(-20),amount:'480'},{item:'잔금',date:mo(45),amount:'360'}]},
+    {id:'p2',corpId:'metanetdl',name:'클라우드 마이그레이션',status:'수행중',growthMix:'Existing/Renewal',svcModel:'IT Service',endClient:'LG화학',client:'LG CNS',start:d(-90),end:d(20),gr:'3000',nr:'840',license:'',mm:'40',billings:[{item:'선금',date:mo(-85),amount:'1200'},{item:'잔금',date:mo(25),amount:'1800'}]},
+    {id:'p3',corpId:'metanetdl',name:'DX 컨설팅 패키지',status:'수행완료',growthMix:'Existing/Renewal',svcModel:'IT Service',endClient:'현대카드',client:'현대카드',start:d(-200),end:d(-30),gr:'500',nr:'210',license:'',mm:'8',billings:[{item:'선금',date:mo(-190),amount:'250'},{item:'잔금',date:mo(-30),amount:'250'}]},
+    {id:'p4',corpId:'fintech',name:'간편결제 시스템',status:'수행중',growthMix:'NetNew',svcModel:'ARR',endClient:'카카오페이',client:'카카오페이',start:d(-60),end:d(25),gr:'800',nr:'240',license:'150',mm:'16',billings:[{item:'선금',date:mo(-55),amount:'400'},{item:'잔금',date:mo(30),amount:'400'}]},
+    {id:'p5',corpId:'fintech',name:'오픈뱅킹 연동',status:'계약완료',growthMix:'NetNew',svcModel:'ARR',endClient:'신한은행',client:'신한DS',start:d(10),end:d(180),gr:'1500',nr:'450',license:'300',mm:'30',billings:[{item:'선금',date:mo(15),amount:'500'}]},
+    {id:'p6',corpId:'skelter',name:'음성인식 AI 엔진',status:'수행중',growthMix:'NetNew',svcModel:'ARR',endClient:'KT',client:'KT',start:d(-70),end:d(60),gr:'2200',nr:'700',license:'500',mm:'36',billings:[{item:'선금',date:mo(-65),amount:'700'},{item:'중도금',date:mo(0),amount:'800'},{item:'잔금',date:mo(65),amount:'700'}]},
+    {id:'p7',corpId:'skelter',name:'ApplyAI 채용 자동화',status:'선투입',growthMix:'Existing/Renewal',svcModel:'ARR',endClient:'쿠팡',client:'쿠팡',start:d(-40),end:d(120),gr:'1800',nr:'540',license:'400',mm:'28',billings:[{item:'선금',date:mo(20),amount:'600'}]}
+  ];
+}
+
+/* ---------- init ---------- */
+load();
+render();
+</script>
+</body>
+</html>
