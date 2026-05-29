@@ -159,7 +159,7 @@ var state = {step:0, corps:[], projects:[], focus:null, editId:null, filter:'all
 var form = null;
 function newBlank(corpId){return {corpId:corpId||'', name:'', status:'계약완료', growthMix:'Existing/Renewal', svcModel:'IT Service', endClient:'', client:'', start:'', end:'', gr:'', nr:'', license:'', mm:'', billings:[{item:'선금',date:'',amount:''}]};}
 /* === 구글 시트 연동: 아래 주소만 본인 Apps Script 웹앱 URL이면 됩니다 === */
-var GAS_URL = "https://script.google.com/a/macros/wisefour.com/s/AKfycbw6c15g-79Hn1I9xftJL4ZYN-jii1zDOJCeNsa8DZfAFE_4Gm60-xDA8n0XdbiwTF0YXA/exec";
+var GAS_URL = "https://script.google.com/macros/s/AKfycbzloZJk_5umftYRufXuqahJvPL6lCoMhfUg1CDEmRK_y3-wz9fxbVX0NFbs4w16LBU43w/exec";
 function cloudOn(){return GAS_URL && GAS_URL.indexOf('http')===0;}
 function setSync(s){var el=document.getElementById('syncbadge');if(!el)return;
   var m={loading:['● 불러오는 중…','#FAA61A'],saving:['● 저장 중…','#FAA61A'],saved:['● 클라우드 저장됨','#3DCB7F'],error:['● 연결 안 됨 (로컬 저장)','#ED1C24'],local:['● 로컬 저장 (시트 미연결)','#7B868C']};
