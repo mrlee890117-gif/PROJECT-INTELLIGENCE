@@ -104,7 +104,7 @@
           <div class="eyebrow">PROJECT INTELLIGENCE</div>
           <h1>Metanet Project Dashboard</h1>
         </div>
-        <div class="meta" id="counts"></div>
+        <div class="meta"><span id="counts"></span><span id="syncbadge" style="display:block;margin-top:6px;font-size:11.5px;font-weight:500;color:#3DCB7F;">● 연결 확인 중…</span></div>
       </div>
     </div>
   </div>
@@ -158,8 +158,38 @@ function ico(name){var p={
 var state = {step:0, corps:[], projects:[], focus:null, editId:null, filter:'all'};
 var form = null;
 function newBlank(corpId){return {corpId:corpId||'', name:'', status:'계약완료', growthMix:'Existing/Renewal', svcModel:'IT Service', endClient:'', client:'', start:'', end:'', gr:'', nr:'', license:'', mm:'', billings:[{item:'선금',date:'',amount:''}]};}
-function save(){try{localStorage.setItem('metanet-dashboard',JSON.stringify({corps:state.corps,projects:state.projects}));}catch(e){}}
+/* === 구글 시트 연동: 아래 주소만 본인 Apps Script 웹앱 URL이면 됩니다 === */
+var GAS_URL = "https://script.google.com/a/macros/wisefour.com/s/AKfycbw6c15g-79Hn1I9xftJL4ZYN-jii1zDOJCeNsa8DZfAFE_4Gm60-xDA8n0XdbiwTF0YXA/exec";
+function cloudOn(){return GAS_URL && GAS_URL.indexOf('http')===0;}
+function setSync(s){var el=document.getElementById('syncbadge');if(!el)return;
+  var m={loading:['● 불러오는 중…','#FAA61A'],saving:['● 저장 중…','#FAA61A'],saved:['● 클라우드 저장됨','#3DCB7F'],error:['● 연결 안 됨 (로컬 저장)','#ED1C24'],local:['● 로컬 저장 (시트 미연결)','#7B868C']};
+  var x=m[s]||m.saved;el.textContent=x[0];el.style.color=x[1];}
+function save(){
+  try{localStorage.setItem('metanet-dashboard',JSON.stringify({corps:state.corps,projects:state.projects}));}catch(e){}
+  cloudSave();
+}
 function load(){try{var r=localStorage.getItem('metanet-dashboard');if(r){var d=JSON.parse(r);state.corps=d.corps||[];state.projects=d.projects||[];}}catch(e){}}
+function cloudSave(){
+  if(!cloudOn()){setSync('local');return;}
+  setSync('saving');
+  fetch(GAS_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},
+    body:JSON.stringify({corps:state.corps,projects:state.projects})})
+    .then(function(){setSync('saved');}).catch(function(){setSync('error');});
+}
+function cloudLoad(){
+  if(!cloudOn()){setSync('local');return;}
+  setSync('loading');
+  fetch(GAS_URL,{method:'GET'}).then(function(r){return r.json();}).then(function(d){
+    var has=d&&((d.corps&&d.corps.length)||(d.projects&&d.projects.length));
+    if(has){
+      state.corps=d.corps||[];state.projects=d.projects||[];
+      try{localStorage.setItem('metanet-dashboard',JSON.stringify({corps:state.corps,projects:state.projects}));}catch(e){}
+      render();setSync('saved');
+    } else if(state.corps.length||state.projects.length){
+      cloudSave(); /* 시트가 비어있으면 현재 로컬 데이터를 시트에 올림 */
+    } else {setSync('saved');}
+  }).catch(function(){setSync('error');});
+}
 
 /* ---------- actions ---------- */
 function setStep(i){state.step=i;if(i===1){if(!state.focus)state.focus=(state.corps[0]||{}).id||null;if(!form||form.corpId!==state.focus)form=newBlank(state.focus);if(state.filter==null)state.filter=state.focus||'all';}render();}
@@ -383,6 +413,7 @@ function sampleProjects(){
 /* ---------- init ---------- */
 load();
 render();
+cloudLoad();
 </script>
 </body>
 </html>
