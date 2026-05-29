@@ -94,6 +94,7 @@
   .addbill{margin-top:8px;display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:8px;background:var(--faint);color:var(--blue);font-size:12.5px;font-weight:600;border:none;cursor:pointer;}
   svg.chart{width:100%;height:auto;display:block;}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 </head>
 <body>
   <div class="band">
@@ -150,7 +151,8 @@ function ico(name){var p={
   x:'<line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>',
   check:'<polyline points="20 6 9 17 4 12"/>',
   spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/>',
-  alert:'<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>'
+  alert:'<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'
   };
   return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(p[name]||'')+'</svg>';}
 
@@ -403,7 +405,10 @@ function viewInsights(){
 
   var legend=byStatus.map(function(s){return '<div style="display:flex;align-items:center;gap:7px;font-size:12.5px"><span class="sq" style="background:'+s.color+'"></span>'+esc(s.name)+' <b>'+s.value+'</b></div>';}).join('');
 
-  return stats
+  var exportBar='<div class="phead" style="margin-bottom:14px"><h3 style="font-size:16px">인사이트 요약</h3>'
+    + '<button class="btn btn-primary" onclick="exportExcel()" style="background:#1F7A44">'+ico('download')+'엑셀 내려받기</button></div>';
+
+  return exportBar + stats
     + '<div class="panel" style="margin-top:16px"><div class="phead"><h3>자동 인사이트</h3><span style="color:'+COL.blue+'">'+ico('spark')+'</span></div><div class="grid" style="gap:9px">'+ins+'</div></div>'
     + '<div class="grid charts2 gap16" style="grid-template-columns:1fr 1fr;margin-top:16px">'
       + '<div class="panel"><div class="phead"><h3>법인별 프로젝트 수</h3></div>'+barChart(byCorp.map(function(c){return {label:c.label,value:c.count,color:c.color};}))+'</div>'
@@ -427,6 +432,52 @@ function sampleProjects(){
     {id:'p6',corpId:'skelter',name:'음성인식 AI 엔진',status:'수행중',growthMix:'NetNew',svcModel:'ARR',endClient:'KT',client:'KT',start:d(-70),end:d(60),gr:'2200',nr:'700',license:'500',mm:'36',billings:[{item:'선금',date:mo(-65),amount:'700'},{item:'중도금',date:mo(0),amount:'800'},{item:'잔금',date:mo(65),amount:'700'}]},
     {id:'p7',corpId:'skelter',name:'ApplyAI 채용 자동화',status:'선투입',growthMix:'Existing/Renewal',svcModel:'ARR',endClient:'쿠팡',client:'쿠팡',start:d(-40),end:d(120),gr:'1800',nr:'540',license:'400',mm:'28',billings:[{item:'선금',date:mo(20),amount:'600'}]}
   ];
+}
+
+/* ---------- 엑셀 내려받기 ---------- */
+function exportExcel(){
+  if(typeof XLSX==='undefined'){alert('엑셀 라이브러리를 불러오지 못했습니다. 인터넷 연결 후 새로고침해 주세요.');return;}
+  var P=state.projects||[];
+  if(!P.length){alert('내려받을 프로젝트가 없습니다.');return;}
+  function num(v){var n=parseFloat(v);return isNaN(n)?'':n;}
+  // 시트1: 프로젝트
+  var rows=P.map(function(p){
+    return {
+      '소속 법인':corpName(p.corpId),
+      '프로젝트명':p.name||'',
+      'Status':p.status||'',
+      'Growth Mix':p.growthMix||'',
+      'SVC Model':p.svcModel||'',
+      'End Client':p.endClient||'',
+      'Client':p.client||'',
+      '계약 시작일':p.start||'',
+      '계약 종료일':p.end||'',
+      'GR(백만)':num(p.gr),
+      'NR(백만)':num(p.nr),
+      '투입 M/M':num(p.mm),
+      '라이선스(백만)':num(p.license)
+    };
+  });
+  // 시트2: 청구 예정
+  var bill=[];
+  P.forEach(function(p){
+    (p.billings||[]).forEach(function(b){
+      if(b.item||b.date||b.amount){
+        bill.push({'소속 법인':corpName(p.corpId),'프로젝트명':p.name||'','청구 항목':b.item||'','청구 예정월':b.date||'','금액(백만)':num(b.amount)});
+      }
+    });
+  });
+  var wb=XLSX.utils.book_new();
+  var ws1=XLSX.utils.json_to_sheet(rows);
+  ws1['!cols']=[{wch:16},{wch:26},{wch:10},{wch:16},{wch:11},{wch:14},{wch:14},{wch:12},{wch:12},{wch:10},{wch:10},{wch:9},{wch:12}];
+  XLSX.utils.book_append_sheet(wb,ws1,'프로젝트');
+  if(bill.length){
+    var ws2=XLSX.utils.json_to_sheet(bill);
+    ws2['!cols']=[{wch:16},{wch:26},{wch:10},{wch:12},{wch:11}];
+    XLSX.utils.book_append_sheet(wb,ws2,'청구예정');
+  }
+  var today=new Date();var ymd=today.getFullYear()+'-'+('0'+(today.getMonth()+1)).slice(-2)+'-'+('0'+today.getDate()).slice(-2);
+  XLSX.writeFile(wb,'Metanet_Projects_'+ymd+'.xlsx');
 }
 
 /* ---------- init ---------- */
