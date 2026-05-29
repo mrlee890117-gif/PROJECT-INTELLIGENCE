@@ -182,6 +182,7 @@ function cloudLoad(){
   fetch(GAS_URL,{method:'GET'}).then(function(r){return r.json();}).then(function(d){
     var has=d&&((d.corps&&d.corps.length)||(d.projects&&d.projects.length));
     if(has){
+      if(state.step===1){setSync('saved');return;} /* 입력 중에는 화면을 건드리지 않음 */
       state.corps=d.corps||[];state.projects=d.projects||[];
       try{localStorage.setItem('metanet-dashboard',JSON.stringify({corps:state.corps,projects:state.projects}));}catch(e){}
       render();setSync('saved');
@@ -200,7 +201,25 @@ function removeBilling(i){form.billings.splice(i,1);renderContent();}
 function resetForm(){form=newBlank(state.focus);state.editId=null;renderContent();}
 function editProject(id){var p=state.projects.find(function(x){return x.id===id;});if(!p)return;form={corpId:p.corpId,name:p.name,status:p.status||'계약완료',growthMix:p.growthMix||'Existing/Renewal',svcModel:p.svcModel||'IT Service',endClient:p.endClient||'',client:p.client||'',start:p.start||'',end:p.end||'',gr:p.gr||'',nr:p.nr||'',license:p.license||'',mm:p.mm||'',billings:(p.billings&&p.billings.length)?p.billings.map(function(b){return {item:b.item,date:b.date,amount:b.amount};}):[{item:'선금',date:'',amount:''}]};state.editId=id;state.focus=p.corpId;renderContent();}
 function deleteProject(id){if(!confirm('이 프로젝트를 삭제할까요?'))return;state.projects=state.projects.filter(function(p){return p.id!==id;});if(state.editId===id){form=newBlank(state.focus);state.editId=null;}save();render();}
-function submitProject(){if(!form.name.trim()||!form.corpId){alert('프로젝트명을 입력해 주세요.');return;}var rec={corpId:form.corpId,name:form.name.trim(),status:form.status,growthMix:form.growthMix,svcModel:form.svcModel,endClient:form.endClient,client:form.client,start:form.start,end:form.end,gr:form.gr,nr:form.nr,license:form.license,mm:form.mm,billings:form.billings.map(function(b){return {item:b.item,date:b.date,amount:b.amount};})};if(state.editId){state.projects=state.projects.map(function(p){return p.id===state.editId?Object.assign({},p,rec):p;});}else{rec.id=uid();state.projects.push(rec);}form=newBlank(state.focus);state.editId=null;save();render();}
+function submitProject(){
+  function gv(id){var el=document.getElementById(id);return el?el.value:'';}
+  if(document.getElementById('pf_name')!==null){
+    form.name=gv('pf_name');
+    form.status=gv('pf_status')||form.status;
+    form.growthMix=gv('pf_growth')||form.growthMix;
+    form.svcModel=gv('pf_svc')||form.svcModel;
+    form.endClient=gv('pf_endClient');
+    form.client=gv('pf_client');
+    form.start=gv('pf_start');
+    form.end=gv('pf_end');
+    form.gr=gv('pf_gr');
+    form.nr=gv('pf_nr');
+    form.mm=gv('pf_mm');
+    form.license=gv('pf_license');
+  }
+  if(!form.name.trim()){alert('프로젝트명을 입력해 주세요.');return;}
+  if(!form.corpId){alert('소속 법인이 선택되지 않았습니다. 1번 "법인 설정"에서 법인을 다시 선택해 주세요.');return;}
+  var rec={corpId:form.corpId,name:form.name.trim(),status:form.status,growthMix:form.growthMix,svcModel:form.svcModel,endClient:form.endClient,client:form.client,start:form.start,end:form.end,gr:form.gr,nr:form.nr,license:form.license,mm:form.mm,billings:form.billings.map(function(b){return {item:b.item,date:b.date,amount:b.amount};})};if(state.editId){state.projects=state.projects.map(function(p){return p.id===state.editId?Object.assign({},p,rec):p;});}else{rec.id=uid();state.projects.push(rec);}form=newBlank(state.focus);state.editId=null;save();render();}
 function loadSample(){state.corps=CORPS.slice();state.projects=sampleProjects();state.focus=null;save();render();}
 
 /* ---------- render ---------- */
@@ -259,18 +278,18 @@ function viewProjects(){
   var formHtml = '<div class="panel"><div class="phead"><h3>'+(state.editId?'프로젝트 수정':'프로젝트 추가')+'</h3></div>'
     + '<div class="grid" style="gap:11px">'
     + '<label class="fld"><span>소속 법인</span><div class="inp locked"><span class="dot" style="background:'+corpColor(form.corpId)+'"></span><span>'+esc(corpName(form.corpId))+'</span></div></label>'
-    + '<label class="fld"><span>프로젝트명 *</span><input class="inp" value="'+esc(form.name)+'" placeholder="예) 차세대 플랫폼 구축" oninput="form.name=this.value"></label>'
-    + '<label class="fld"><span>Status</span>'+selHtml(form.status, STATUSES, 'onchange="form.status=this.value"')+'</label>'
-    + '<div class="row2"><label class="fld"><span>Growth Mix</span>'+selHtml(form.growthMix, GROWTH_MIX, 'onchange="form.growthMix=this.value"')+'</label>'
-    + '<label class="fld"><span>SVC Model</span>'+selHtml(form.svcModel, SVC_MODEL, 'onchange="form.svcModel=this.value"')+'</label></div>'
-    + '<div class="row2"><label class="fld"><span>End Client</span><input class="inp" value="'+esc(form.endClient)+'" placeholder="최종 고객사" oninput="form.endClient=this.value"></label>'
-    + '<label class="fld"><span>Client</span><input class="inp" value="'+esc(form.client)+'" placeholder="계약 고객사" oninput="form.client=this.value"></label></div>'
-    + '<div class="row2"><label class="fld"><span>계약 시작일</span><input class="inp" type="date" value="'+esc(form.start)+'" oninput="form.start=this.value"></label>'
-    + '<label class="fld"><span>계약 종료일</span><input class="inp" type="date" value="'+esc(form.end)+'" oninput="form.end=this.value"></label></div>'
-    + '<div class="row2"><label class="fld"><span>GR (백만)</span><input class="inp" value="'+esc(form.gr)+'" placeholder="Gross Revenue" oninput="form.gr=this.value"></label>'
-    + '<label class="fld"><span>NR (백만)</span><input class="inp" value="'+esc(form.nr)+'" placeholder="Net Revenue" oninput="form.nr=this.value"></label></div>'
-    + '<div class="row2"><label class="fld"><span>투입 M/M</span><input class="inp" value="'+esc(form.mm)+'" placeholder="예) 24" oninput="form.mm=this.value"></label>'
-    + '<label class="fld"><span>라이선스 금액 (백만)</span><input class="inp" value="'+esc(form.license)+'" placeholder="License" oninput="form.license=this.value"></label></div>'
+    + '<label class="fld"><span>프로젝트명 *</span><input id="pf_name" class="inp" value="'+esc(form.name)+'" placeholder="예) 차세대 플랫폼 구축" oninput="form.name=this.value"></label>'
+    + '<label class="fld"><span>Status</span>'+selHtml(form.status, STATUSES, 'id="pf_status" onchange="form.status=this.value"')+'</label>'
+    + '<div class="row2"><label class="fld"><span>Growth Mix</span>'+selHtml(form.growthMix, GROWTH_MIX, 'id="pf_growth" onchange="form.growthMix=this.value"')+'</label>'
+    + '<label class="fld"><span>SVC Model</span>'+selHtml(form.svcModel, SVC_MODEL, 'id="pf_svc" onchange="form.svcModel=this.value"')+'</label></div>'
+    + '<div class="row2"><label class="fld"><span>End Client</span><input id="pf_endClient" class="inp" value="'+esc(form.endClient)+'" placeholder="최종 고객사" oninput="form.endClient=this.value"></label>'
+    + '<label class="fld"><span>Client</span><input id="pf_client" class="inp" value="'+esc(form.client)+'" placeholder="계약 고객사" oninput="form.client=this.value"></label></div>'
+    + '<div class="row2"><label class="fld"><span>계약 시작일</span><input id="pf_start" class="inp" type="date" value="'+esc(form.start)+'" oninput="form.start=this.value"></label>'
+    + '<label class="fld"><span>계약 종료일</span><input id="pf_end" class="inp" type="date" value="'+esc(form.end)+'" oninput="form.end=this.value"></label></div>'
+    + '<div class="row2"><label class="fld"><span>GR (백만)</span><input id="pf_gr" class="inp" value="'+esc(form.gr)+'" placeholder="Gross Revenue" oninput="form.gr=this.value"></label>'
+    + '<label class="fld"><span>NR (백만)</span><input id="pf_nr" class="inp" value="'+esc(form.nr)+'" placeholder="Net Revenue" oninput="form.nr=this.value"></label></div>'
+    + '<div class="row2"><label class="fld"><span>투입 M/M</span><input id="pf_mm" class="inp" value="'+esc(form.mm)+'" placeholder="예) 24" oninput="form.mm=this.value"></label>'
+    + '<label class="fld"><span>라이선스 금액 (백만)</span><input id="pf_license" class="inp" value="'+esc(form.license)+'" placeholder="License" oninput="form.license=this.value"></label></div>'
     + '<div><span style="display:block;font-size:12px;color:'+COL.sub+';margin-bottom:6px;font-weight:500">청구 예정일</span><div class="grid" style="gap:8px">'+bills+'</div>'
     + '<button class="addbill" onclick="addBilling()">'+ico('plus')+'청구 예정 추가</button></div>'
     + '<div style="display:flex;gap:8px;margin-top:4px"><button class="btn btn-add" onclick="submitProject()">'+(state.editId?ico('check')+'수정 저장':ico('plus')+'추가')+'</button>'
