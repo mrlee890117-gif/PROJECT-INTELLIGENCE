@@ -52,8 +52,8 @@
   .btn-ghost{padding:11px 14px;border-radius:9px;background:var(--faint);color:var(--sub);}
   .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 
-  .proj-layout{display:grid;grid-template-columns:360px 1fr;gap:18px;align-items:start;}
-  @media(max-width:780px){ .proj-layout{grid-template-columns:1fr;} .charts2{grid-template-columns:1fr !important;} }
+  .proj-layout{display:grid;grid-template-columns:minmax(520px,1.2fr) 1fr;gap:18px;align-items:start;}
+  @media(max-width:900px){ .proj-layout{grid-template-columns:1fr;} .charts2{grid-template-columns:1fr !important;} }
 
   .corpcards{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;}
   .corpcard{text-align:left;padding:18px;border-radius:14px;background:var(--card);border:2px solid var(--line);position:relative;cursor:pointer;}
@@ -88,8 +88,8 @@
   .sq{width:11px;height:11px;border-radius:3px;}
   .billrow{display:grid;grid-template-columns:84px 1fr;gap:7px;}
   .billrow .r{display:flex;gap:7px;}
-  .billrow .r .inp[type=date]{flex:0 0 auto;width:124px;}
-  .billrow .r .amt{flex:1;min-width:0;}
+  .billrow .r .inp[type=month]{flex:0 0 auto;width:110px;padding-left:8px;padding-right:6px;}
+  .billrow .r .amt{flex:1 1 auto;min-width:0;font-weight:600;}
   .billrow .x{flex:0 0 auto;background:var(--faint);color:var(--sub);border-radius:8px;padding:0 9px;border:none;cursor:pointer;}
   .addbill{margin-top:8px;display:flex;align-items:center;gap:5px;padding:7px 11px;border-radius:8px;background:var(--faint);color:var(--blue);font-size:12.5px;font-weight:600;border:none;cursor:pointer;}
   svg.chart{width:100%;height:auto;display:block;}
@@ -277,9 +277,9 @@ function viewProjects(){
 
   var formHtml = '<div class="panel"><div class="phead"><h3>'+(state.editId?'프로젝트 수정':'프로젝트 추가')+'</h3></div>'
     + '<div class="grid" style="gap:11px">'
-    + '<label class="fld"><span>소속 법인</span><div class="inp locked"><span class="dot" style="background:'+corpColor(form.corpId)+'"></span><span>'+esc(corpName(form.corpId))+'</span></div></label>'
+    + '<div class="row2"><label class="fld"><span>소속 법인</span><div class="inp locked"><span class="dot" style="background:'+corpColor(form.corpId)+'"></span><span>'+esc(corpName(form.corpId))+'</span></div></label>'
+    + '<label class="fld"><span>Status</span>'+selHtml(form.status, STATUSES, 'id="pf_status" onchange="form.status=this.value"')+'</label></div>'
     + '<label class="fld"><span>프로젝트명 *</span><input id="pf_name" class="inp" value="'+esc(form.name)+'" placeholder="예) 차세대 플랫폼 구축" oninput="form.name=this.value"></label>'
-    + '<label class="fld"><span>Status</span>'+selHtml(form.status, STATUSES, 'id="pf_status" onchange="form.status=this.value"')+'</label>'
     + '<div class="row2"><label class="fld"><span>Growth Mix</span>'+selHtml(form.growthMix, GROWTH_MIX, 'id="pf_growth" onchange="form.growthMix=this.value"')+'</label>'
     + '<label class="fld"><span>SVC Model</span>'+selHtml(form.svcModel, SVC_MODEL, 'id="pf_svc" onchange="form.svcModel=this.value"')+'</label></div>'
     + '<div class="row2"><label class="fld"><span>End Client</span><input id="pf_endClient" class="inp" value="'+esc(form.endClient)+'" placeholder="최종 고객사" oninput="form.endClient=this.value"></label>'
