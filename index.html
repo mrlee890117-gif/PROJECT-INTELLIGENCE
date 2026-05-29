@@ -152,7 +152,8 @@ function ico(name){var p={
   check:'<polyline points="20 6 9 17 4 12"/>',
   spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/>',
   alert:'<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>',
-  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>'
+  download:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>',
+  upload:'<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>'
   };
   return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+(p[name]||'')+'</svg>';}
 
@@ -406,7 +407,11 @@ function viewInsights(){
   var legend=byStatus.map(function(s){return '<div style="display:flex;align-items:center;gap:7px;font-size:12.5px"><span class="sq" style="background:'+s.color+'"></span>'+esc(s.name)+' <b>'+s.value+'</b></div>';}).join('');
 
   var exportBar='<div class="phead" style="margin-bottom:14px"><h3 style="font-size:16px">인사이트 요약</h3>'
-    + '<button class="btn btn-primary" onclick="exportExcel()" style="background:#1F7A44">'+ico('download')+'엑셀 내려받기</button></div>';
+    + '<div style="display:flex;gap:8px">'
+    + '<button class="btn btn-primary" onclick="document.getElementById(\'xlsxInput\').click()" style="background:#0041A0">'+ico('upload')+'엑셀 업로드</button>'
+    + '<button class="btn btn-primary" onclick="exportExcel()" style="background:#1F7A44">'+ico('download')+'엑셀 내려받기</button>'
+    + '<input type="file" id="xlsxInput" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this)">'
+    + '</div></div>';
 
   return exportBar + stats
     + '<div class="panel" style="margin-top:16px"><div class="phead"><h3>자동 인사이트</h3><span style="color:'+COL.blue+'">'+ico('spark')+'</span></div><div class="grid" style="gap:9px">'+ins+'</div></div>'
@@ -479,6 +484,88 @@ function exportExcel(){
   var today=new Date();var ymd=today.getFullYear()+'-'+('0'+(today.getMonth()+1)).slice(-2)+'-'+('0'+today.getDate()).slice(-2);
   XLSX.writeFile(wb,'Metanet_Projects_'+ymd+'.xlsx');
 }
+
+/* ---------- 엑셀 업로드(일괄 등록) ---------- */
+function importExcel(input){
+  var file=input.files&&input.files[0];
+  if(!file){return;}
+  if(typeof XLSX==='undefined'){alert('엑셀 라이브러리를 불러오지 못했습니다. 새로고침 후 다시 시도해 주세요.');input.value='';return;}
+  var reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      var wb=XLSX.read(e.target.result,{type:'array'});
+      var shP=wb.Sheets['프로젝트']; 
+      if(!shP){alert('"프로젝트" 시트를 찾을 수 없습니다. 제공된 템플릿을 사용해 주세요.');input.value='';return;}
+      var rowsP=XLSX.utils.sheet_to_json(shP,{defval:''});
+      // 청구예정 시트(선택)
+      var billByName={};
+      var shB=wb.Sheets['청구예정'];
+      if(shB){
+        XLSX.utils.sheet_to_json(shB,{defval:''}).forEach(function(b){
+          var nm=String(b['프로젝트명']||'').trim(); if(!nm)return;
+          (billByName[nm]=billByName[nm]||[]).push({
+            item:String(b['청구 항목']||'').trim()||'선금',
+            date:fmtMonth(b['청구 예정월']),
+            amount:cleanNum(b['금액(백만)'])
+          });
+        });
+      }
+      function corpIdByName(nm){
+        nm=String(nm||'').trim();
+        var hit=state.corps.find(function(c){return c.name===nm;})
+             || CORPS.find(function(c){return c.name===nm;});
+        return hit?hit.id:null;
+      }
+      var added=0, skipped=[], newCorps=[];
+      rowsP.forEach(function(r,idx){
+        var name=String(r['프로젝트명']||'').trim();
+        var corpName0=String(r['소속 법인']||'').trim();
+        if(!name && !corpName0) return; // 빈 줄 무시
+        if(!name){skipped.push('('+(idx+2)+'행) 프로젝트명 없음'); return;}
+        var cid=corpIdByName(corpName0);
+        if(!cid){skipped.push('('+(idx+2)+'행) "'+name+'": 법인 "'+corpName0+'" 미등록'); return;}
+        // 사용된 법인을 corps에 보장
+        if(!state.corps.some(function(c){return c.id===cid;})){
+          var cobj=CORPS.find(function(c){return c.id===cid;}); if(cobj){state.corps.push(cobj);newCorps.push(cobj.name);}
+        }
+        var rec={
+          id:uid(), corpId:cid, name:name,
+          status:String(r['Status']||'계약완료').trim()||'계약완료',
+          growthMix:String(r['Growth Mix']||'Existing/Renewal').trim()||'Existing/Renewal',
+          svcModel:String(r['SVC Model']||'IT Service').trim()||'IT Service',
+          endClient:String(r['End Client']||'').trim(),
+          client:String(r['Client']||'').trim(),
+          start:fmtDate(r['계약 시작일']), end:fmtDate(r['계약 종료일']),
+          gr:cleanNum(r['GR(백만)']), nr:cleanNum(r['NR(백만)']),
+          mm:cleanNum(r['투입 M/M']), license:cleanNum(r['라이선스(백만)']),
+          billings: (billByName[name]&&billByName[name].length)? billByName[name] : [{item:'선금',date:'',amount:''}]
+        };
+        state.projects.push(rec); added++;
+      });
+      input.value='';
+      if(added===0){
+        alert('등록된 프로젝트가 없습니다.\n\n'+(skipped.length?('문제 행:\n'+skipped.join('\n')):'데이터가 비어 있는지 확인해 주세요.'));
+        return;
+      }
+      save(); render();
+      var msg=added+'건이 등록되었습니다.';
+      if(newCorps.length) msg+='\n(법인 자동 추가: '+newCorps.join(', ')+')';
+      if(skipped.length) msg+='\n\n제외된 행 '+skipped.length+'개:\n'+skipped.join('\n');
+      alert(msg);
+    }catch(err){
+      alert('파일을 읽는 중 오류가 발생했습니다: '+err.message); input.value='';
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+function cleanNum(v){if(v===''||v==null)return '';var n=parseFloat(String(v).replace(/[^0-9.\-]/g,''));return isNaN(n)?'':String(n);}
+function fmtDate(v){
+  if(v===''||v==null)return '';
+  if(v instanceof Date){return v.getFullYear()+'-'+('0'+(v.getMonth()+1)).slice(-2)+'-'+('0'+v.getDate()).slice(-2);}
+  if(typeof v==='number'){var d=XLSX.SSF?XLSX.SSF.parse_date_code(v):null;if(d)return d.y+'-'+('0'+d.m).slice(-2)+'-'+('0'+d.d).slice(-2);}
+  var s=String(v).trim(); return s;
+}
+function fmtMonth(v){var d=fmtDate(v);return d?d.slice(0,7):'';}
 
 /* ---------- init ---------- */
 load();
